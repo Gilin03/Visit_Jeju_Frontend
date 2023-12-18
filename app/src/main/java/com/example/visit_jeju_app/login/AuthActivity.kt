@@ -1,6 +1,7 @@
 package com.example.visit_jeju_app.login
 
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -25,6 +26,7 @@ import com.google.firebase.ktx.Firebase
 class AuthActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     lateinit var binding: ActivityAuthBinding
+    private val YOUR_PHONE_AUTH_REQUEST_CODE = 100
 
     //    private lateinit var database: DatabaseReference
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,9 +53,12 @@ class AuthActivity : AppCompatActivity() {
             changeVisibility("logout")
         }
 
-        binding.goSignInBtn.setOnClickListener{
-            changeVisibility("signin")
+        binding.goSignInBtn.setOnClickListener {
+            val intent = Intent(this@AuthActivity, PhoneAuthActivity::class.java)
+            startActivityForResult(intent, YOUR_PHONE_AUTH_REQUEST_CODE)
         }
+
+
 
         binding.signBtn.setOnClickListener {
             //이메일,비밀번호 회원가입
@@ -201,4 +206,14 @@ class AuthActivity : AppCompatActivity() {
             }
         }
     }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == YOUR_PHONE_AUTH_REQUEST_CODE && resultCode == RESULT_OK) {
+            // 전화번호 인증이 성공한 경우의 처리
+            changeVisibility("signin")
+        }
+    }
+
 }

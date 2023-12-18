@@ -61,10 +61,11 @@ class PhoneAuthActivity : AppCompatActivity() {
             auth.signInWithCredential(credential)
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
-                        val intent = Intent(this@PhoneAuthActivity, AuthActivity::class.java)
-                        intent.putExtra("USER_EMAIL", MyApplication.email)
-                        startActivity(intent)
                         Toast.makeText(this@PhoneAuthActivity, "인증이 확인 되었습니다.", Toast.LENGTH_SHORT).show()
+
+                        // PhoneAuthActivity에서 전화번호 인증 성공 후
+                        val intent = Intent()
+                        setResult(RESULT_OK, intent)
                         finish()
                     } else {
                         if (task.exception is FirebaseAuthInvalidCredentialsException) {
@@ -75,6 +76,7 @@ class PhoneAuthActivity : AppCompatActivity() {
                     }
                 }
         }
+
     }
 
     private fun formatToInternational(phoneNumber: String): String {
