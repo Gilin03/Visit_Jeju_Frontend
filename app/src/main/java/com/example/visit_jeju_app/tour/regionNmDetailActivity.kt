@@ -11,10 +11,12 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat.startActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
@@ -23,12 +25,15 @@ import com.example.visit_jeju_app.MyApplication
 import com.example.visit_jeju_app.R
 import com.example.visit_jeju_app.accommodation.AccomActivity
 import com.example.visit_jeju_app.chat.ChatActivity
+import com.example.visit_jeju_app.comment.Comment
 import com.example.visit_jeju_app.community.activity.CommReadActivity
 import com.example.visit_jeju_app.databinding.ActivityRegionNmDetailBinding
 import com.example.visit_jeju_app.festival.FesActivity
 import com.example.visit_jeju_app.gpt.GptActivity
 import com.example.visit_jeju_app.login.AuthActivity
 import com.example.visit_jeju_app.restaurant.ResActivity
+import com.example.visit_jeju_app.retrofit.NetworkServiceRegionNm
+import com.example.visit_jeju_app.retrofit.saveComment
 import com.example.visit_jeju_app.shopping.ShopActivity
 import com.example.visit_jeju_app.tour.model.TourList
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -38,8 +43,12 @@ import com.naver.maps.map.MapView
 import com.naver.maps.map.NaverMap
 import com.naver.maps.map.OnMapReadyCallback
 import com.naver.maps.map.overlay.Marker
+import okhttp3.ResponseBody
 import retrofit2.Call
+import retrofit2.Callback
 import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 class regionNmDetailActivity : AppCompatActivity(), OnMapReadyCallback {
     lateinit var binding: ActivityRegionNmDetailBinding
@@ -80,7 +89,12 @@ class regionNmDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
         //드로워화면 액션버튼 클릭 시 드로워 화면 나오게 하기(공통 레이아웃 코드)
         toggle =
-            ActionBarDrawerToggle(this@regionNmDetailActivity, binding.drawerLayout,R.string.open, R.string.close)
+            ActionBarDrawerToggle(
+                this@regionNmDetailActivity,
+                binding.drawerLayout,
+                R.string.open,
+                R.string.close
+            )
         binding.drawerLayout.addDrawerListener(toggle)
 
         //화면 적용하기(공통 레이아웃 코드)
@@ -96,27 +110,33 @@ class regionNmDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                     startActivity(Intent(this, AccomActivity::class.java))
                     true
                 }
+
                 R.id.restaurant -> {
                     startActivity(Intent(this, ResActivity::class.java))
                     true
                 }
+
                 R.id.tour -> {
                     startActivity(Intent(this, TourActivity::class.java))
                     true
                 }
+
                 R.id.festival -> {
                     startActivity(Intent(this, FesActivity::class.java))
                     true
                 }
+
                 R.id.shopping -> {
                     startActivity(Intent(this, ShopActivity::class.java))
                     true
                 }
+
                 R.id.community -> {
                     // '커뮤니티' 메뉴 아이템 클릭 시 CommReadActivity로 이동
                     startActivity(Intent(this, CommReadActivity::class.java))
                     true
                 }
+
                 R.id.chatting -> {
                     startActivity(Intent(this, ChatActivity::class.java))
                     true
@@ -136,19 +156,23 @@ class regionNmDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                     startActivity(intent)
                     true
                 }
+
                 R.id.chat -> {
                     val intent = Intent(this@regionNmDetailActivity, GptActivity::class.java)
                     startActivity(intent)
                     true
                 }
+
                 R.id.youtube -> {
                     openWebPage("https://www.youtube.com/c/visitjeju")
                     true
                 }
+
                 R.id.instagram -> {
                     openWebPage("https://www.instagram.com/visitjeju.kr")
                     true
                 }
+
                 else -> false
             }
         }
@@ -167,7 +191,7 @@ class regionNmDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
         val imgUrl: String? = intent.getStringExtra("itemsRepPhotoPhotoidImgPath")
 
-        var itemsPhoneNo : String? = intent.getStringExtra("itemsPhoneNo")
+        var itemsPhoneNo: String? = intent.getStringExtra("itemsPhoneNo")
 
         // 전화 버튼
         binding.callBtn.setOnClickListener {
@@ -187,6 +211,7 @@ class regionNmDetailActivity : AppCompatActivity(), OnMapReadyCallback {
                     binding.avatarView.setImageBitmap(resource)
 //                    Log.d("lsy", "width : ${resource.width}, height: ${resource.height}")
                 }
+
                 override fun onLoadCleared(placeholder: Drawable?) {
                 }
             })
@@ -195,9 +220,55 @@ class regionNmDetailActivity : AppCompatActivity(), OnMapReadyCallback {
         mapView!!.onCreate(savedInstanceState)
         mapView!!.getMapAsync(this@regionNmDetailActivity)
 
+        // 댓글 저장 버튼 클릭 리스너 설정
+
+        val commentEditView = findViewById<EditText>(R.id.commentEditView)
+        val commentBtn = findViewById<Button>(R.id.commentBtn)
+
+        // 댓글 저장 버튼 클릭 리스너 설정
+        commentBtn.setOnClickListener {
+            val comment = commentEditView.text.toString()
+            if (comment.isNotEmpty()) {
+                val userId = MyApplication.auth.currentUser?.uid ?: ""
+                saveComment(comment, userId)
+                Log.d("lsy","2: ${comment} $comment  ")
+            } else {
+                Toast.makeText(this, "댓글을 입력해주세요.", Toast.LENGTH_SHORT).show()
+            }
+        }
+
     }//onCreate
 
     // 함수 구현 ---------------------------------------------------------------------------
+
+    private fun saveComment(comment: String, userId: String) {
+        Log.d("lsy","1: ${comment} $comment  ")
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://10.0.2.2:8083/") // 서버 URL
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val commentService = retrofit.create(NetworkServiceRegionNm::class.java)
+        val comment = Comment(id = null, comment = comment, userId = userId)
+
+        commentService.saveComment(comment).enqueue(object : Callback<ResponseBody> {
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                if (response.isSuccessful) {
+                    Toast.makeText(this@regionNmDetailActivity, "댓글 저장 성공", Toast.LENGTH_SHORT).show()
+                    Log.d("lsy","3: ${comment} $comment  ")
+                } else {
+                    Toast.makeText(this@regionNmDetailActivity, "댓글 저장 실패", Toast.LENGTH_SHORT).show()
+                    Log.d("lsy","4: ${comment} $comment  ")
+                }
+            }
+
+            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                Toast.makeText(this@regionNmDetailActivity, "서버 오류: ${t.message}", Toast.LENGTH_SHORT).show()
+                Log.d("lsy","5: ${comment} $comment  ")
+            }
+        })
+    }
+
 
     // Bottom Navigation link(공통 레이아웃 코드)
     private fun openWebPage(url: String) {

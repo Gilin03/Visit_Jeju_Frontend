@@ -2,6 +2,7 @@ package com.example.visit_jeju_app.retrofit
 
 import android.util.Log
 import com.example.visit_jeju_app.accommodation.model.AccomList
+import com.example.visit_jeju_app.comment.Comment
 import com.example.visit_jeju_app.festival.model.FesList
 import com.example.visit_jeju_app.restaurant.model.ResList
 import com.example.visit_jeju_app.shopping.model.ShopList
@@ -99,6 +100,9 @@ interface NetworkServiceRegionNm {
 
     @POST("users/register")
     fun registerUser(@Body userInfo: UserInfo): Call<ResponseBody>
+    @POST("comment/save")
+    fun saveComment(@Body comment: Comment): Call<ResponseBody>
+
 
 }
 
@@ -135,6 +139,31 @@ fun addUserToMysql(name: String, email: String, firebaseUid: String) {
         }
     })
 }
+
+fun saveComment(comment: String, userId: String) {
+    val retrofit = Retrofit.Builder()
+        .baseUrl("http://10.0.2.2:8083/") // 서버 URL
+        .addConverterFactory(GsonConverterFactory.create())
+        .build()
+
+    val commentService = retrofit.create(NetworkServiceRegionNm::class.java)
+    val comment = Comment(id = null, comment = comment, userId = userId)
+
+    commentService.saveComment(comment).enqueue(object : Callback<ResponseBody> {
+        override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+            if (response.isSuccessful) {
+                Log.d("lsy", "MySQL에 댓글 저장 성공")
+            } else {
+                Log.d("lsy", "MySQL에 댓글 저장 실패 - 상태 코드: ${response.code()}")
+            }
+        }
+
+        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+            Log.d("lsy", "댓글 저장 중 서버 에러: ${t.message}")
+        }
+    })
+}
+
 
 
 
