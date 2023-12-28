@@ -140,14 +140,14 @@ fun addUserToMysql(name: String, email: String, firebaseUid: String) {
     })
 }
 
-fun saveComment(comment: String, userId: String) {
+fun saveComment(comment: String, userId: String, itemId: Long?) {
     val retrofit = Retrofit.Builder()
         .baseUrl("http://10.0.2.2:8083/") // 서버 URL
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
     val commentService = retrofit.create(NetworkServiceRegionNm::class.java)
-    val comment = Comment(id = null, comment = comment, userId = userId)
+    val comment = Comment(id = null, comment = comment, userId = userId, itemType = "tour", itemId = 1)
 
     commentService.saveComment(comment).enqueue(object : Callback<ResponseBody> {
         override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {

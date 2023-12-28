@@ -69,24 +69,13 @@ class RegionNmAdapter(val context: TourRegionNmActivity, val datas: List<TourLis
             intent.putExtra("itemsAllTag", model.itemsAllTag)
             intent.putExtra("itemsIntroduction", model.itemsIntroduction)
             intent.putExtra("itemsContentsCdLabel", model.itemsContentsCdLabel)
+            intent.putExtra("tourid", model.tourId)
+            Log.d("lsy1", "itemsContentsCdLabel: ${model.itemsContentsCdLabel}")
+            Log.d("lsy1", "tourId: ${model.tourId}")
+
 
             ContextCompat.startActivity(holder.binding.root.context, intent, null)
         }
 
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -16,7 +16,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.widget.SearchView
-import androidx.core.content.ContextCompat.startActivity
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
@@ -33,7 +32,6 @@ import com.example.visit_jeju_app.gpt.GptActivity
 import com.example.visit_jeju_app.login.AuthActivity
 import com.example.visit_jeju_app.restaurant.ResActivity
 import com.example.visit_jeju_app.retrofit.NetworkServiceRegionNm
-import com.example.visit_jeju_app.retrofit.saveComment
 import com.example.visit_jeju_app.shopping.ShopActivity
 import com.example.visit_jeju_app.tour.model.TourList
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -230,7 +228,9 @@ class regionNmDetailActivity : AppCompatActivity(), OnMapReadyCallback {
             val comment = commentEditView.text.toString()
             if (comment.isNotEmpty()) {
                 val userId = MyApplication.auth.currentUser?.uid ?: ""
-                saveComment(comment, userId)
+                val itemType = intent.getStringExtra("itemsContentsCdLabel") // itemType 설정
+                val itemId = intent.getIntExtra("tourid", -1) // itemId 설정
+                saveComment(comment, userId, itemType, itemId)
                 Log.d("lsy","2: ${comment} $comment  ")
             } else {
                 Toast.makeText(this, "댓글을 입력해주세요.", Toast.LENGTH_SHORT).show()
@@ -241,7 +241,7 @@ class regionNmDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
     // 함수 구현 ---------------------------------------------------------------------------
 
-    private fun saveComment(comment: String, userId: String) {
+    private fun saveComment(comment: String, userId: String, itemType: String?, itemId: Int?) {
         Log.d("lsy","1: ${comment} $comment  ")
         val retrofit = Retrofit.Builder()
             .baseUrl("http://10.0.2.2:8083/") // 서버 URL
@@ -249,7 +249,7 @@ class regionNmDetailActivity : AppCompatActivity(), OnMapReadyCallback {
             .build()
 
         val commentService = retrofit.create(NetworkServiceRegionNm::class.java)
-        val comment = Comment(id = null, comment = comment, userId = userId)
+        val comment = Comment(id = null, comment = comment, userId = userId, itemType = itemType, itemId = itemId)
 
         commentService.saveComment(comment).enqueue(object : Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {

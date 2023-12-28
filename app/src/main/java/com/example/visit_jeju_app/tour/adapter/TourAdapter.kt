@@ -63,6 +63,9 @@ class TourAdapter(val context: TourActivity, val datas:List<TourList>?): Recycle
             intent.putExtra("itemsAllTag", model?.itemsAllTag)
             intent.putExtra("itemsPhoneNo", model?.itemsPhoneNo)
             intent.putExtra("itemsRepPhotoPhotoidImgPath", model?.itemsRepPhotoPhotoidImgPath)
+            intent.putExtra("tourid", model?.tourId)
+            Log.d("lsy1", "itemsContentsCdLabel: ${model?.itemsContentsCdLabel}")
+            Log.d("lsy1", "tourId: ${model?.tourId}")
 
             ContextCompat.startActivity(holder.binding.root.context, intent, null)
         }
