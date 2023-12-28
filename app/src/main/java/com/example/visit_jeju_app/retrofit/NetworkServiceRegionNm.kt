@@ -140,29 +140,6 @@ fun addUserToMysql(name: String, email: String, firebaseUid: String) {
     })
 }
 
-fun saveComment(comment: String, userId: String, itemId: Long?) {
-    val retrofit = Retrofit.Builder()
-        .baseUrl("http://10.0.2.2:8083/") // 서버 URL
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-
-    val commentService = retrofit.create(NetworkServiceRegionNm::class.java)
-    val comment = Comment(id = null, comment = comment, userId = userId, itemType = "tour", itemId = 1)
-
-    commentService.saveComment(comment).enqueue(object : Callback<ResponseBody> {
-        override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-            if (response.isSuccessful) {
-                Log.d("lsy", "MySQL에 댓글 저장 성공")
-            } else {
-                Log.d("lsy", "MySQL에 댓글 저장 실패 - 상태 코드: ${response.code()}")
-            }
-        }
-
-        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-            Log.d("lsy", "댓글 저장 중 서버 에러: ${t.message}")
-        }
-    })
-}
 
 
 

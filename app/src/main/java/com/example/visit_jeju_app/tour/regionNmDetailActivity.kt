@@ -229,7 +229,7 @@ class regionNmDetailActivity : AppCompatActivity(), OnMapReadyCallback {
             if (comment.isNotEmpty()) {
                 val userId = MyApplication.auth.currentUser?.uid ?: ""
                 val itemType = intent.getStringExtra("itemsContentsCdLabel") // itemType 설정
-                val itemId = intent.getIntExtra("tourid", -1) // itemId 설정
+                val itemId = intent.getLongExtra("tourId", -1) // itemId 설정
                 saveComment(comment, userId, itemType, itemId)
                 Log.d("lsy","2: ${comment} $comment  ")
             } else {
@@ -241,7 +241,7 @@ class regionNmDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
     // 함수 구현 ---------------------------------------------------------------------------
 
-    private fun saveComment(comment: String, userId: String, itemType: String?, itemId: Int?) {
+    private fun saveComment(comment: String, userId: String, itemType: String?, itemId: Long?) {
         Log.d("lsy","1: ${comment} $comment  ")
         val retrofit = Retrofit.Builder()
             .baseUrl("http://10.0.2.2:8083/") // 서버 URL
