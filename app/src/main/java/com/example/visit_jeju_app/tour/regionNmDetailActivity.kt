@@ -16,6 +16,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.widget.SearchView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
@@ -25,6 +27,7 @@ import com.example.visit_jeju_app.R
 import com.example.visit_jeju_app.accommodation.AccomActivity
 import com.example.visit_jeju_app.chat.ChatActivity
 import com.example.visit_jeju_app.comment.Comment
+import com.example.visit_jeju_app.comment.recycler.CommentAdapter
 import com.example.visit_jeju_app.community.activity.CommReadActivity
 import com.example.visit_jeju_app.databinding.ActivityRegionNmDetailBinding
 import com.example.visit_jeju_app.festival.FesActivity
@@ -54,6 +57,9 @@ class regionNmDetailActivity : AppCompatActivity(), OnMapReadyCallback {
 
     //액션버튼 토글(공통 레이아웃 코드)
     lateinit var toggle: ActionBarDrawerToggle
+    private lateinit var commentsRecyclerView: RecyclerView
+    private lateinit var commentAdapter: CommentAdapter
+    private var comments: List<Comment> = listOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         binding = ActivityRegionNmDetailBinding.inflate(layoutInflater)
@@ -237,9 +243,42 @@ class regionNmDetailActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         }
 
+        commentsRecyclerView = findViewById(R.id.commentsRecyclerView)
+        commentsRecyclerView.layoutManager = LinearLayoutManager(this)
+        commentAdapter = CommentAdapter(comments)
+        commentsRecyclerView.adapter = commentAdapter
+
+        // 댓글 가져오기
+        fetchComments()
+
     }//onCreate
 
     // 함수 구현 ---------------------------------------------------------------------------
+
+    private fun fetchComments() {
+        val retrofit = Retrofit.Builder()
+            .baseUrl("http://10.0.2.2:8083/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val networkService = retrofit.create(NetworkServiceRegionNm::class.java)
+        val itemType = intent.getStringExtra("itemsContentsCdLabel") ?: ""
+        val itemId = intent.getLongExtra("tourId", -1)
+
+        networkService.getComments(itemType, itemId).enqueue(object : Callback<List<Comment>> {
+            override fun onResponse(call: Call<List<Comment>>, response: Response<List<Comment>>) {
+                if (response.isSuccessful) {
+                    comments = response.body() ?: emptyList()
+                    commentAdapter = CommentAdapter(comments)
+                    commentsRecyclerView.adapter = commentAdapter
+                }
+            }
+
+            override fun onFailure(call: Call<List<Comment>>, t: Throwable) {
+                Toast.makeText(this@regionNmDetailActivity, "댓글 가져오기 실패: ${t.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
+    }
 
     private fun saveComment(comment: String, userId: String, itemType: String?, itemId: Long?) {
         Log.d("lsy","1: ${comment} $comment  ")

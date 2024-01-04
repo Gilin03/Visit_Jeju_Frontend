@@ -103,6 +103,11 @@ interface NetworkServiceRegionNm {
     @POST("comment/save")
     fun saveComment(@Body comment: Comment): Call<ResponseBody>
 
+    @GET("comment/search")
+    fun getComments(
+        @Query("itemType") itemType: String,
+        @Query("itemId") itemId: Long
+    ): Call<List<Comment>>
 
 }
 
